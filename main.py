@@ -9,7 +9,7 @@ from page_loader import initialize, get_firstpage, get_page
 
 
 
-URL = "https://merolagani.com/Floorsheet.aspx"
+URL = "http://merolagani.com/Floorsheet.aspx"
 HEADERS = {
         'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:67.0) Gecko/20100101 Firefox/67.0',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -21,7 +21,7 @@ HEADERS = {
         'TE': 'Trailers',
     }
 YEAR_LIMIT = 2020
-START_DATE = "01/01/2021"
+START_DATE = "12/31/2020"
 OUTPUT_PATH = "outputs"
 
 RANDOM_SLEEP = []
@@ -33,85 +33,76 @@ for i in range(50):
 def random_sleep():
     time.sleep(random.choice(RANDOM_SLEEP))
 
+if not os.path.exists(OUTPUT_PATH):
+    os.mkdir(OUTPUT_PATH)
+
 logger = get_logger()
 
 start_date = datetime.strptime(START_DATE, '%m/%d/%Y')
 td = 0
 logger.info('Program started with start date {} and td {}'.format(start_date, td))
+
+sess, form_data = initialize(URL, headers=HEADERS) # get sess object with cookies in it
+headers = HEADERS.copy()
+headers['Referer'] = URL
+headers['Origin'] = "http://merolagani.com"
+
 while True:
     date_filter = start_date - timedelta(td)
     if date_filter.year < YEAR_LIMIT:
         logger.info('Year limit reached')
         break
 
-    output_folder = + OUTPUT_PATH + '/' + date_filter.strftime('%Y-%m-%d')
+    output_folder = OUTPUT_PATH + '/' + date_filter.strftime('%Y-%m-%d')
     os.mkdir(output_folder)
 
     date_filter = date_filter.strftime('%m/%d/%Y')
 
-    sess, form_data = initialize(URL, headers=HEADERS) # get sess object with cookies in it
-    headers = HEADERS.copy()
-    headers['Referer'] = URL
-    headers['Origin'] = "http://merolagani.com"
-
-    data = {
-            '__EVENTTARGET': '',
-            '__EVENTARGUMENT': '',
-            '__VIEWSTATE': form_data['viewstate'],
-            '__VIEWSTATEGENERATOR': form_data['viewgenerator'],
-            '__EVENTVALIDATION': form_data['evalidation'],
-            'ctl00$Hidden1': '',
-            'ctl00$ASCompany$hdnAutoSuggest': '0',
-            'ctl00$ASCompany$txtAutoSuggest': '',
-            'ctl00$hdnNewsList': '',
-            'ctl00$AutoSuggest1$hdnAutoSuggest': '0',
-            'ctl00$AutoSuggest1$txtAutoSuggest': '',
-            'ctl00$txtNews': '',
-            'ctl00$ContentPlaceHolder1$ASCompanyFilter$hdnAutoSuggest': '0',
-            'ctl00$ContentPlaceHolder1$ASCompanyFilter$txtAutoSuggest': '',
-            'ctl00$ContentPlaceHolder1$txtBuyerBrokerCodeFilter': '',
-            'ctl00$ContentPlaceHolder1$txtSellerBrokerCodeFilter': '',
-            'ctl00$ContentPlaceHolder1$txtFloorsheetDateFilter': date_filter,
-            'ctl00$ContentPlaceHolder1$PagerControl1$hdnPCID': 'PC1',
-            'ctl00$ContentPlaceHolder1$PagerControl1$hdnCurrentPage': 0,
-            'ctl00$ContentPlaceHolder1$PagerControl1$btnPaging': '',
-            'ctl00$ContentPlaceHolder1$PagerControl2$hdnPCID': 'PC2',
-            'ctl00$ContentPlaceHolder1$PagerControl2$hdnCurrentPage': '0',
-        }
-
     time.sleep(2)
-    sess, content, total_pages, form_data = get_firstpage(sess, URL, headers=headers, data=data)
+    sess, content, total_pages, form_data = get_firstpage(sess, URL, headers=headers, form_data=form_data, date_filter=date_filter)
+    if sess is None:
+        td += 1
+        continue
+    logger.info('Total pages: {}'.format(total_pages))
     filepath = output_folder + '/1.html'
     with open(filepath, 'w') as fp:
         fp.write(content)
 
     for i in range(2, total_pages + 1):
+        logger.info('Getting {} page'.format(i))
         random_sleep()
         data = {
-            '__EVENTTARGET': '',
-            '__EVENTARGUMENT': '',
             '__VIEWSTATE': form_data['viewstate'],
             '__VIEWSTATEGENERATOR': form_data['viewgenerator'],
             '__EVENTVALIDATION': form_data['evalidation'],
-            'ctl00$Hidden1': '',
-            'ctl00$ASCompany$hdnAutoSuggest': '0',
-            'ctl00$ASCompany$txtAutoSuggest': '',
-            'ctl00$hdnNewsList': '',
-            'ctl00$AutoSuggest1$hdnAutoSuggest': '0',
-            'ctl00$AutoSuggest1$txtAutoSuggest': '',
-            'ctl00$txtNews': '',
-            'ctl00$ContentPlaceHolder1$ASCompanyFilter$hdnAutoSuggest': '0',
-            'ctl00$ContentPlaceHolder1$ASCompanyFilter$txtAutoSuggest': '',
-            'ctl00$ContentPlaceHolder1$txtBuyerBrokerCodeFilter': '',
-            'ctl00$ContentPlaceHolder1$txtSellerBrokerCodeFilter': '',
-            'ctl00$ContentPlaceHolder1$txtFloorsheetDateFilter': date_filter,
+            # 'ctl00$Hidden1': '',
+            # 'ctl00$ASCompany$hdnAutoSuggest': '0',
+            # 'ctl00$ASCompany$txtAutoSuggest': '',
+            # 'ctl00$hdnNewsList': '',
+            # 'ctl00$AutoSuggest1$hdnAutoSuggest': '0',
+            # 'ctl00$AutoSuggest1$txtAutoSuggest': '',
+            # 'ctl00$txtNews': '',
+            # 'ctl00$ContentPlaceHolder1$ASCompanyFilter$hdnAutoSuggest': '0',
+            # 'ctl00$ContentPlaceHolder1$ASCompanyFilter$txtAutoSuggest': '',
+            # 'ctl00$ContentPlaceHolder1$txtBuyerBrokerCodeFilter': '',
+            # 'ctl00$ContentPlaceHolder1$txtSellerBrokerCodeFilter': '',
+            # 'ctl00$ContentPlaceHolder1$txtFloorsheetDateFilter': date_filter,
             'ctl00$ContentPlaceHolder1$PagerControl1$hdnPCID': 'PC1',
-            'ctl00$ContentPlaceHolder1$PagerControl1$hdnCurrentPage': str(i),
+            'ctl00$ContentPlaceHolder1$PagerControl1$hdnCurrentPage': i,
             'ctl00$ContentPlaceHolder1$PagerControl1$btnPaging': '',
             'ctl00$ContentPlaceHolder1$PagerControl2$hdnPCID': 'PC2',
-            'ctl00$ContentPlaceHolder1$PagerControl2$hdnCurrentPage': '0',
+            'ctl00$ContentPlaceHolder1$PagerControl2$hdnCurrentPage': i,
         }
         sess, content, form_data = get_page(sess, URL, headers, data=data)
+        if sess is None:
+            logger.debug('Check for page {} of date {}'.format(i, date_filter))
+            sess, form_data = initialize(URL, headers=HEADERS) # Again get the session back
+            sess, content, total_pages, form_data = get_firstpage(sess, URL, headers=headers, form_data=form_data, date_filter=date_filter)
+            if sess is None: #Break for loop and move to previous date
+                td += 1
+                break
+            continue
+
         filepath = output_folder + '/{}.html'.format(i)
         with open(filepath, 'w') as fp:
             fp.write(content)
