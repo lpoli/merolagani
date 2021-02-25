@@ -42,10 +42,6 @@ start_date = datetime.strptime(START_DATE, '%m/%d/%Y')
 td = 0
 logger.info('Program started with start date {} and td {}'.format(start_date, td))
 
-sess, form_data = initialize(URL, headers=HEADERS) # get sess object with cookies in it
-headers = HEADERS.copy()
-headers['Referer'] = URL
-headers['Origin'] = "http://merolagani.com"
 
 while True:
     date_filter = start_date - timedelta(td)
@@ -57,6 +53,11 @@ while True:
     os.mkdir(output_folder)
 
     date_filter = date_filter.strftime('%m/%d/%Y')
+
+    sess, form_data = initialize(URL, headers=HEADERS) # get sess object with cookies in it
+    headers = HEADERS.copy()
+    headers['Referer'] = URL
+    headers['Origin'] = "http://merolagani.com"
 
     time.sleep(2)
     sess, content, total_pages, form_data = get_firstpage(sess, URL, headers=headers, form_data=form_data, date_filter=date_filter)
@@ -86,12 +87,12 @@ while True:
             # 'ctl00$ContentPlaceHolder1$ASCompanyFilter$txtAutoSuggest': '',
             # 'ctl00$ContentPlaceHolder1$txtBuyerBrokerCodeFilter': '',
             # 'ctl00$ContentPlaceHolder1$txtSellerBrokerCodeFilter': '',
-            # 'ctl00$ContentPlaceHolder1$txtFloorsheetDateFilter': date_filter,
+            'ctl00$ContentPlaceHolder1$txtFloorsheetDateFilter': date_filter,
             'ctl00$ContentPlaceHolder1$PagerControl1$hdnPCID': 'PC1',
             'ctl00$ContentPlaceHolder1$PagerControl1$hdnCurrentPage': i,
             'ctl00$ContentPlaceHolder1$PagerControl1$btnPaging': '',
             'ctl00$ContentPlaceHolder1$PagerControl2$hdnPCID': 'PC2',
-            'ctl00$ContentPlaceHolder1$PagerControl2$hdnCurrentPage': i,
+            'ctl00$ContentPlaceHolder1$PagerControl2$hdnCurrentPage': 0,
         }
         sess, content, form_data = get_page(sess, URL, headers, data=data)
         if sess is None:

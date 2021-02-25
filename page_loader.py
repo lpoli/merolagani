@@ -1,10 +1,12 @@
 import re
 from requests import Session
+from requests.adapters import HTTPAdapter
 from bs4 import BeautifulSoup
 import requests
 
 def initialize(url, headers):
     sess = Session()
+    sess.mount('http://', HTTPAdapter(max_retries=5))
     res = sess.get(url, headers=headers)
     soup = BeautifulSoup(res.text, 'lxml')
     form_data = get_form_data(soup)
@@ -49,10 +51,12 @@ def get_firstpage(sess, url, headers, form_data, date_filter):
 
         form_data = get_form_data(soup)
         return sess, res.text, total_pages, form_data
+    
+    return None, None, None, None
 
 def get_page(sess, url, headers, data):
-    # res = sess.post(url, headers=headers, data=data, timeout=30)
-    res = requests.post(url, headers=headers, data=data, timeout=30)
+    res = sess.post(url, headers=headers, data=data, timeout=30)
+    # res = requests.post(url, headers=headers, data=data, timeout=30
 
     print(res)
     if res.ok:
