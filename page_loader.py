@@ -13,7 +13,7 @@ def initialize(url, headers):
     return sess, form_data
 
 def get_firstpage(sess, url, headers, form_data, date_filter):
-    data = {
+    payload = {
             '__EVENTTARGET': 'ctl00$ContentPlaceHolder1$lbtnSearchFloorsheet',
             '__EVENTARGUMENT': '',
             '__VIEWSTATE': form_data['viewstate'],
@@ -34,7 +34,7 @@ def get_firstpage(sess, url, headers, form_data, date_filter):
         }
 
     try:
-        res = sess.post(url, headers=headers, data=data, timeout=30)
+        res = sess.post(url, headers=headers, data=payload, timeout=30)
     except:
         return None, None, None, None
     print(res, '\n')
@@ -54,9 +54,31 @@ def get_firstpage(sess, url, headers, form_data, date_filter):
     
     return None, None, None, None
 
-def get_page(sess, url, headers, data):
+def get_page(sess, url, headers, form_data, date_filter, page_num):
+    payload = {
+            '__VIEWSTATE': form_data['viewstate'],
+            '__VIEWSTATEGENERATOR': form_data['viewgenerator'],
+            '__EVENTVALIDATION': form_data['evalidation'],
+            # 'ctl00$Hidden1': '',
+            # 'ctl00$ASCompany$hdnAutoSuggest': '0',
+            # 'ctl00$ASCompany$txtAutoSuggest': '',
+            # 'ctl00$hdnNewsList': '',
+            # 'ctl00$AutoSuggest1$hdnAutoSuggest': '0',
+            # 'ctl00$AutoSuggest1$txtAutoSuggest': '',
+            # 'ctl00$txtNews': '',
+            # 'ctl00$ContentPlaceHolder1$ASCompanyFilter$hdnAutoSuggest': '0',
+            # 'ctl00$ContentPlaceHolder1$ASCompanyFilter$txtAutoSuggest': '',
+            # 'ctl00$ContentPlaceHolder1$txtBuyerBrokerCodeFilter': '',
+            # 'ctl00$ContentPlaceHolder1$txtSellerBrokerCodeFilter': '',
+            'ctl00$ContentPlaceHolder1$txtFloorsheetDateFilter': date_filter,
+            'ctl00$ContentPlaceHolder1$PagerControl1$hdnPCID': 'PC1',
+            'ctl00$ContentPlaceHolder1$PagerControl1$hdnCurrentPage': page_num,
+            'ctl00$ContentPlaceHolder1$PagerControl1$btnPaging': '',
+            'ctl00$ContentPlaceHolder1$PagerControl2$hdnPCID': 'PC2',
+            'ctl00$ContentPlaceHolder1$PagerControl2$hdnCurrentPage': 0,
+        }
     try:
-        res = sess.post(url, headers=headers, data=data, timeout=30)
+        res = sess.post(url, headers=headers, data=payload, timeout=30)
     except:
         return None, None, None
     # res = requests.post(url, headers=headers, data=data, timeout=30
