@@ -55,7 +55,10 @@ def get_firstpage(sess, url, headers, form_data, date_filter):
     return None, None, None, None
 
 def get_page(sess, url, headers, data):
-    res = sess.post(url, headers=headers, data=data, timeout=30)
+    try:
+        res = sess.post(url, headers=headers, data=data, timeout=30)
+    except:
+        return None, None, None
     # res = requests.post(url, headers=headers, data=data, timeout=30
 
     print(res)
@@ -63,6 +66,7 @@ def get_page(sess, url, headers, data):
         soup = BeautifulSoup(res.text, 'lxml')
         form_data = get_form_data(soup)
         return sess, res.text, form_data
+    return None, None, None
 
 def get_form_data(soup):
     form_data = {}

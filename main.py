@@ -6,6 +6,7 @@ import requests
 import random
 from logger import get_logger
 from page_loader import initialize, get_firstpage, get_page
+from parser import parse
 
 
 
@@ -20,8 +21,8 @@ HEADERS = {
         'Cache-Control': 'no-cache',
         'TE': 'Trailers',
     }
-YEAR_LIMIT = 2020
-START_DATE = "12/31/2020"
+YEAR_LIMIT = 2018
+START_DATE = "12/31/2019"
 OUTPUT_PATH = "outputs"
 
 RANDOM_SLEEP = []
@@ -40,7 +41,7 @@ logger = get_logger()
 
 start_date = datetime.strptime(START_DATE, '%m/%d/%Y')
 td = 0
-logger.info('Program started with start date {} and td {}'.format(start_date, td))
+logger.info('Program started with start date {} and td {}'.format(START_DATE, td))
 
 
 while True:
@@ -50,7 +51,13 @@ while True:
         break
 
     output_folder = OUTPUT_PATH + '/' + date_filter.strftime('%Y-%m-%d')
-    os.mkdir(output_folder)
+    try: # Skip if folder already exists
+        os.mkdir(output_folder)
+        logger.info('{} Folder create'.format(date_filter.strftime('%Y-%m-%d')))
+    except FileExistsError:
+        logger.debug('{} Folder exists'.format(date_filter.strftime('%Y-%m-%d')))
+        td += 1
+        continue
 
     date_filter = date_filter.strftime('%m/%d/%Y')
 
@@ -70,7 +77,7 @@ while True:
         fp.write(content)
 
     for i in range(2, total_pages + 1):
-        logger.info('Getting {} page'.format(i))
+        logger.info('Getting page {}'.format(i))
         random_sleep()
         data = {
             '__VIEWSTATE': form_data['viewstate'],
@@ -97,7 +104,7 @@ while True:
         sess, content, form_data = get_page(sess, URL, headers, data=data)
         if sess is None:
             logger.debug('Check for page {} of date {}'.format(i, date_filter))
-            sess, form_data = initialize(URL, headers=HEADERS) # Again get the session back
+            sess, form_data = initialize(URL, headers=HEADERS) # Get the session back
             sess, content, total_pages, form_data = get_firstpage(sess, URL, headers=headers, form_data=form_data, date_filter=date_filter)
             if sess is None: #Break for loop and move to previous date
                 td += 1
@@ -109,6 +116,15 @@ while True:
             fp.write(content)
 
     td += 1
+
+# parse the downloaded dumps
+folders = os.listdir(OUTPUT_PATH)
+for folder in folders:
+    logger.info('Parsing data for date {}'.format(folder))
+    folder_path = OUTPUT_PATH + '/{}'.format(folder)
+    parse(folder_path)
+    logger.info('Parsing completed for date {}'.format(folder))
+
 
 '''
 def func1():
