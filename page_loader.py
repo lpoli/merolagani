@@ -7,7 +7,20 @@ import requests
 def initialize(url, headers):
     sess = Session()
     sess.mount('http://', HTTPAdapter(max_retries=5))
-    res = sess.get(url, headers=headers)
+    res = None
+    for i in range(10):
+        print('Initializer Request {} time'.format(i+1))
+        try:
+            res = sess.get(url, headers=headers, timeout=30)
+        except:
+            continue
+        if res.ok:
+            break
+        else:
+            res = None
+    if res is None:
+        raise Exception('Could not initialize. Please run the program again')
+
     soup = BeautifulSoup(res.text, 'lxml')
     form_data = get_form_data(soup)
     return sess, form_data
